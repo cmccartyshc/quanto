@@ -165,7 +165,7 @@ interface DRProps {
 }
 
 function DailyResult({ question, result, analysis, bellData, timedOut, streak, navigate }: DRProps) {
-  const isHigh = result.guess > result.actualAnswer
+  const isHigh = result.guess > question.answer
   const errorPct = Math.round(result.percentError)
   const dirColor = result.guess === 0 ? 'var(--text-muted)' : isHigh ? 'var(--accent-high)' : 'var(--accent-low)'
 
@@ -202,7 +202,7 @@ function DailyResult({ question, result, analysis, bellData, timedOut, streak, n
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
         {[
           { label: 'Your Guess', value: formatNumber(result.guess), sub: question.units },
-          { label: 'Answer', value: formatNumber(result.actualAnswer), sub: question.units },
+          { label: 'Answer', value: formatNumber(question.answer), sub: question.units },
           { label: 'Error', value: `${errorPct}%`, sub: <span style={{ color: dirColor }}>{result.guess === 0 ? 'timed out' : isHigh ? '↑ high' : '↓ low'}</span> },
         ].map((s) => (
           <div key={s.label} className="card" style={{ padding: 14, textAlign: 'center' }}>
