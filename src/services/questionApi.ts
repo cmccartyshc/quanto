@@ -218,8 +218,45 @@ export async function fetchOpenTriviaQuestions(): Promise<GeneratedQuestion[]> {
   }
 }
 
+// ── Groq via serverless function (primary) ──────────────────────
+async function fetchGroqQuestions(): Promise<GeneratedQuestion[]> {
+  const res = await fetch('/api/generate-questions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(20000),
+  })
+  if (!res.ok) return []
+  const data = await res.json()
+  const raw = data?.questions ?? []
+
+  return raw.map((q: Record<string, unknown>) => ({
+    id: nextId(),
+    prompt: String(q.prompt ?? ''),
+    answer: Number(q.answer ?? 0),
+    units: String(q.units ?? 'units'),
+    category: (q.category as GeneratedQuestion['category']) ?? 'science',
+    difficulty: (q.difficulty as GeneratedQuestion['difficulty']) ?? 'normal',
+    explanation: String(q.explanation ?? ''),
+    sourceName: String(q.sourceName ?? 'Groq / Llama 3'),
+    sourceUrl: String(q.sourceUrl ?? 'https://groq.com'),
+    answerType: 'estimated' as const,
+    createdAt: new Date().toISOString().slice(0, 10),
+    needsReview: true,
+    generatedBy: 'ai' as const,
+  })).filter((q: GeneratedQuestion) => q.prompt && q.answer > 0)
+}
+
 // ── Main orchestrator ───────────────────────────────────────────
 export async function fetchNewQuestions(): Promise<{ questions: GeneratedQuestion[]; source: string }> {
+  // Try Groq first (AI-generated, highest quality)
+  try {
+    const questions = await fetchGroqQuestions()
+    if (questions.length > 0) return { questions, source: 'Groq / Llama 3' }
+  } catch {
+    // Fall through to public APIs
+  }
+
+  // Fallback: free public APIs
   const fetchers = [
     { fn: fetchWorldBankQuestions, name: 'World Bank' },
     { fn: fetchWikidataQuestions, name: 'Wikidata' },
@@ -230,9 +267,7 @@ export async function fetchNewQuestions(): Promise<{ questions: GeneratedQuestio
   for (const { fn, name } of fetchers) {
     try {
       const questions = await fn()
-      if (questions.length > 0) {
-        return { questions, source: name }
-      }
+      if (questions.length > 0) return { questions, source: name }
     } catch {
       // Try next
     }
