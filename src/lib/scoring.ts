@@ -16,10 +16,13 @@ export function calculatePercentError(guess: number, answer: number): number {
   return Math.abs((guess - answer) / answer) * 100
 }
 
-// Score = percentile rank against peer guesses (0–100).
+// Score = % of peers whose error was LARGER than yours (0–100).
+// Guessing exactly right beats everyone. Median accuracy scores ~50.
 // To use real peer data: pass actual stored guesses instead of simulated ones.
-export function calculateScore(guess: number, peerGuesses: number[]): number {
-  return getPercentileRank(guess, peerGuesses)
+export function calculateScore(guess: number, answer: number, peerGuesses: number[]): number {
+  const myError = Math.abs(guess - answer)
+  const beatenPeers = peerGuesses.filter((g) => Math.abs(g - answer) > myError).length
+  return Math.round((beatenPeers / peerGuesses.length) * 100)
 }
 
 /**
@@ -97,11 +100,16 @@ export function buildBellCurveData(
     }
   })
 
+  // Accuracy-based percentile — matches calculateScore
+  const myError = Math.abs(playerGuess - answer)
+  const beatenPeers = peerGuesses.filter((g) => Math.abs(g - answer) > myError).length
+  const playerPercentile = Math.round((beatenPeers / peerGuesses.length) * 100)
+
   return {
     bins,
     playerGuess,
     answer,
-    playerPercentile: getPercentileRank(playerGuess, peerGuesses),
+    playerPercentile,
   }
 }
 

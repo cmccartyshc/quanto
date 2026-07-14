@@ -57,7 +57,7 @@ export default function GameScreen({ questions, navigate, sessionScore, onScoreU
 
     const percentError = calculatePercentError(finalGuess, question.answer)
     const peerGuesses = generateSimulatedPeerGuesses(question.answer, question.id)
-    const score = calculateScore(finalGuess, peerGuesses)
+    const score = calculateScore(finalGuess, question.answer, peerGuesses)
     const bd = buildBellCurveData(finalGuess, question.answer, peerGuesses)
 
     const record: GuessRecord = {
