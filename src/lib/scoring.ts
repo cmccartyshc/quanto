@@ -1,18 +1,14 @@
 /**
  * Scoring module.
  *
- * MVP: score = max(0, 100 - percentError). Simple and fair.
+ * Score = percentile rank of your guess against peer guesses.
+ * A score of 82 means you guessed closer to the answer than 82% of players.
  *
- * FUTURE SCORING INTENT (z-score based):
- * When we have real peer guesses, replace `calculateScore` with:
- *   const mean = average(peerGuesses)
- *   const stdDev = standardDeviation(peerGuesses)
- *   const z = (guess - mean) / stdDev
- *   // Player is scored on how close they are to the accepted answer relative
- *   // to the spread of all peer guesses. A guess within 1 std dev of the
- *   // correct answer scores ~85+; within 0.5 stdDev scores 95+.
- *   score = Math.max(0, Math.round(100 - Math.abs(z) * 20))
- * This rewards being closer than your peers, creating competitive tension.
+ * SWAP POINT FOR REAL DATA:
+ * `calculateScore` takes a `peerGuesses` array. Right now callers pass
+ * `generateSimulatedPeerGuesses(answer, questionId)`. When real stored guesses
+ * exist, pass those instead — this function and everything downstream stays
+ * identical.
  */
 
 export function calculatePercentError(guess: number, answer: number): number {
@@ -20,8 +16,10 @@ export function calculatePercentError(guess: number, answer: number): number {
   return Math.abs((guess - answer) / answer) * 100
 }
 
-export function calculateScore(percentError: number): number {
-  return Math.max(0, Math.round(100 - percentError))
+// Score = percentile rank against peer guesses (0–100).
+// To use real peer data: pass actual stored guesses instead of simulated ones.
+export function calculateScore(guess: number, peerGuesses: number[]): number {
+  return getPercentileRank(guess, peerGuesses)
 }
 
 /**

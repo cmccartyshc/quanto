@@ -47,8 +47,8 @@ export default function DailyScreen({ navigate }: Props) {
     const finalGuess = auto || isNaN(guess) ? 0 : guess
 
     const percentError = calculatePercentError(finalGuess, question.answer)
-    const score = calculateScore(percentError)
     const peerGuesses = generateSimulatedPeerGuesses(question.answer, question.id)
+    const score = calculateScore(finalGuess, peerGuesses)
     const bd = buildBellCurveData(finalGuess, question.answer, peerGuesses)
 
     const dailyResult: DailyResult = {
